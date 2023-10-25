@@ -254,4 +254,15 @@ class ApiCommon:
                 # Use retry header timer since is available to use
                 return float(response.headers[RETRY_HEADER]) * ONE_SECOND
             return 0.0
+        elif response.status_code == 200:
+            result = response.json()
+            if "errors" in result:
+                codes = {error.get("extensions", {}).get("code") for error in result["errors"]}
+                if "THROTTLED" in codes:
+                    cost = response.json()["extensions"]["cost"]
+                    expected_query_cost = cost["requestedQueryCost"] + 10
+                    currently_available = cost["throttleStatus"]["currentlyAvailable"]
+                    restore_rate = cost["throttleStatus"]["restoreRate"]
+                    time_to_sleep = (expected_query_cost - currently_available) / restore_rate
+                    return float(time_to_sleep) * ONE_SECOND
         return False
