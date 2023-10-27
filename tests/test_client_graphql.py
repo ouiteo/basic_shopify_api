@@ -1,6 +1,8 @@
 import pytest
-from .utils import generate_opts_and_sess, local_server_session, async_local_server_session
-from basic_shopify_api import Client, AsyncClient
+
+from basic_shopify_api import AsyncClient, Client
+
+from .utils import async_local_server_session, generate_opts_and_sess, local_server_session
 
 
 @pytest.mark.usefixtures("local_server")

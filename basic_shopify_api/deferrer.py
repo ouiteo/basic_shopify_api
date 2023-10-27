@@ -1,6 +1,8 @@
-import time
 import asyncio
+import time
 from abc import ABCMeta, abstractmethod
+
+from .constants import ONE_SECOND
 from .types import SleepTime
 
 
@@ -9,7 +11,6 @@ class Deferrer(metaclass=ABCMeta):
         """
         Get the current time in ms.
         """
-
         return int(round(time.time() * 1000))
 
     @abstractmethod
@@ -17,16 +18,14 @@ class Deferrer(metaclass=ABCMeta):
         """
         Sleep (sync) for X ms.
         """
-
-        pass  # pragma: no cover
+        ...
 
     @abstractmethod
     def asleep(self, length: SleepTime) -> None:
         """
         Sleep (async) for X ms.
         """
-
-        pass  # pragma: no cover
+        ...
 
 
 class SleepDeferrer(Deferrer):
@@ -34,4 +33,4 @@ class SleepDeferrer(Deferrer):
         time.sleep(length / 1000.0)
 
     async def asleep(self, length: SleepTime) -> None:
-        await asyncio.sleep(length / 1000.0)
+        await asyncio.sleep(length / ONE_SECOND)

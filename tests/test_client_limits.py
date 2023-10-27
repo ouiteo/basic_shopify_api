@@ -1,7 +1,10 @@
-import pytest
 from http import HTTPStatus
-from .utils import generate_opts_and_sess, local_server_session, async_local_server_session
-from basic_shopify_api import Client, AsyncClient
+
+import pytest
+
+from basic_shopify_api import AsyncClient, Client
+
+from .utils import async_local_server_session, generate_opts_and_sess, local_server_session
 
 
 @pytest.mark.usefixtures("local_server")
@@ -63,7 +66,7 @@ def test_rest_retry_header():
             headers={
                 "x-test-status": f"{HTTPStatus.BAD_GATEWAY.value} {HTTPStatus.BAD_GATEWAY.phrase}",
                 "x-test-retry": "1.0",
-            }
+            },
         )
         assert 502 in response.status
         assert response.retries == c.options.max_retries

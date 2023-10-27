@@ -1,42 +1,31 @@
-.PHONY: clean test cover cover-html lint build verify publish docs release
+CYAN ?= \033[0;36m
+COFF ?= \033[0m
 
-clean:
-	find . -name '*.pyc' -exec rm --force {} +
-	find . -name '.pyo' -exec rm --force {} +
-	find . -name '__pycache__' -type d -exec rm -rf {} +
-	find . -name '*.egg-info' -type d -exec rm -rf {} +
-	find . -name 'dist' -type d -exec rm -rf {} +
-	find . -name 'build' -type d -exec rm -rf {} +
-	find . -name 'docs' -type d -exec rm -rf {} +
-	rm .coverage || true
-	rm -rf htmlcov/ || true
-	rm -rf .pytest_cache/ || true
+.PHONY: deps lint check test help test_app
+.EXPORT_ALL_VARIABLES:
 
-test: clean
-	$(PREFIX)pytest
+.DEFAULT: help
+help: ## Display help message
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(CYAN)%-30s$(COFF) %s\n", $$1, $$2}'
 
-cover: clean
-	$(PREFIX)coverage run --source basic_shopify_api/ -m pytest
-	$(PREFIX)coverage report -m
+deps: ## Install dependencies
+	@printf "$(CYAN)Updating python deps$(COFF)\n"
+	pip3 install -U pip poetry
+	@poetry install
 
-cover-html: cover
-	$(PREFIX)coverage html -d htmlcov
+lint: ## Lint the code
+	@printf "$(CYAN)Auto-formatting with black$(COFF)\n"
+	poetry run autoflake -ir basic_shopify_api tests
+	poetry run isort basic_shopify_api tests
+	poetry run black basic_shopify_api tests
 
-lint:
-	$(PREFIX)flake8 . --count --exit-zero --statistics
+check: ## Check code quality
+	@printf "$(CYAN)Running static code analysis$(COFF)\n"
+	poetry run flake8p basic_shopify_api tests
+	poetry run black --check basic_shopify_api tests
+	poetry run mypy basic_shopify_api tests --ignore-missing-imports
+	poetry run run isort cli.py basic_shopify_api tests --check
 
-build: clean
-	python setup.py sdist bdist_wheel
-
-verify:
-	$(PREFIX)twine check dist/*
-
-publish:
-	$(PREFIX)twine upload dist/*
-
-docs: clean
-	$(PREFIX)pdoc --output-dir docs basic_shopify_api
-	mv docs/basic_shopify_api/* docs/
-	rm -rf docs/basic_shopify_api/
-
-release: build verify docs publish
+test: ## Run the test suite
+	@printf "$(CYAN)Running test suite$(COFF)\n"
+	poetry run pytest

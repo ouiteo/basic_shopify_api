@@ -1,4 +1,3 @@
-import pytest
 from basic_shopify_api.utils import hmac_verify
 
 

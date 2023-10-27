@@ -1,7 +1,10 @@
-import pytest
 from json import JSONDecodeError
-from basic_shopify_api import Client, AsyncClient
-from .utils import generate_opts_and_sess, local_server_session, async_local_server_session
+
+import pytest
+
+from basic_shopify_api import AsyncClient, Client
+
+from .utils import async_local_server_session, generate_opts_and_sess, local_server_session
 
 
 def test_is_authable():
@@ -23,11 +26,21 @@ def test_version_path():
 
 
 def test_rest_extract_link():
-    page_info = "eyJsYXN0X2lkIjo0MDkwMTQ0ODQ5OTgyLCJsYXN_0X3ZhbHVlIjoiPGh0bWw-PGh0bWw-MiBZZWFyIERWRCwgQmx1LVJheSwgU2F0ZWxsaXRlLCBhbmQgQ2FibGUgRnVsbCBDaXJjbGXihKIgMTAwJSBWYWx1ZSBCYWNrIFByb2R1Y3QgUHJvdGVjdGlvbiB8IDIgYW4gc3VyIGxlcyBsZWN0ZXVycyBEVkQgZXQgQmx1LXJheSBldCBwYXNzZXJlbGxlcyBtdWx0aW3DqWRpYXMgYXZlYyByZW1pc2Ugw6AgMTAwICUgQ2VyY2xlIENvbXBsZXQ8c3VwPk1DPFwvc3VwPjxcL2h0bWw-PFwvaHRtbD4iLCJkaXJlY3Rpb24iOiJuZXh0In0"
+    page_info = (
+        "eyJsYXN0X2lkIjo0MDkwMTQ0ODQ5OTgyLCJsYXN_0X3ZhbHVlIjoiPGh0bWw-PGh0bWw-MiBZZWFyIERWRCwgQmx1LVJheSwgU2F0ZW"
+        "xsaXRlLCBhbmQgQ2FibGUgRnVsbCBDaXJjbGXihKIgMTAwJSBWYWx1ZSBCYWNrIFByb2R1Y3QgUHJvdGVjdGlvbiB8IDIgYW4gc3VyI"
+        "GxlcyBsZWN0ZXVycyBEVkQgZXQgQmx1LXJheSBldCBwYXNzZXJlbGxlcyBtdWx0aW3DqWRpYXMgYXZlYyByZW1pc2Ugw6AgMTAwICUg"
+        "Q2VyY2xlIENvbXBsZXQ8c3VwPk1DPFwvc3VwPjxcL2h0bWw-PFwvaHRtbD4iLCJkaXJlY3Rpb24iOiJuZXh0In0"
+    )
     with Client(*generate_opts_and_sess()) as c:
-        result = c._rest_extract_link({
-            "link": f"<https://example.myshopify.com/admin/api/unstable/products.json?page_info={page_info}>; rel=\"next\""
-        })
+        result = c._rest_extract_link(
+            {
+                "link": (
+                    "<https://example.myshopify.com/admin/api/unstable/products.json?"
+                    f'page_info={page_info}>; rel="next"'
+                )
+            }
+        )
         assert result.next == page_info
         assert result.prev is None
 

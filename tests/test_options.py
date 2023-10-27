@@ -1,4 +1,5 @@
 import pytest
+
 from basic_shopify_api import Options
 
 

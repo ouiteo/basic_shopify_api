@@ -1,8 +1,10 @@
-import pytest
 import os
 from http import HTTPStatus
 from multiprocessing import Process
 from wsgiref.simple_server import make_server
+
+import pytest
+
 from basic_shopify_api.constants import RETRY_HEADER
 
 

@@ -1,16 +1,21 @@
-from ..constants import NOT_AUTHABLE_PATTERN, \
-    NOT_VERSIONABLE_PATTERN, \
-    LINK_PATTERN, \
-    ACCESS_TOKEN_HEADER, \
-    ONE_SECOND, \
-    RETRY_HEADER
-from ..types import UnionRequestData, ParsedBody
-from ..models import RestLink, RestResult, ApiResult
-from ..constants import REST, LINK_HEADER
-from httpx._types import HeaderTypes
-from httpx._models import Response
-from typing import Pattern, Union, Optional
 import re
+from typing import Optional, Pattern, Union
+
+from httpx._models import Response
+from httpx._types import HeaderTypes
+
+from ..constants import (
+    ACCESS_TOKEN_HEADER,
+    LINK_HEADER,
+    LINK_PATTERN,
+    NOT_AUTHABLE_PATTERN,
+    NOT_VERSIONABLE_PATTERN,
+    ONE_SECOND,
+    REST,
+    RETRY_HEADER,
+)
+from ..models import ApiResult, RestLink, RestResult
+from ..types import ParsedBody, UnionRequestData
 
 
 class ApiCommon:
@@ -85,11 +90,7 @@ class ApiCommon:
         if ignore_check:
             return self.replace_path(path)
 
-        ignore_versioning = (
-            not self.is_authable(path) or
-            not self.is_versionable(path) or
-            self.options.version in path
-        )
+        ignore_versioning = not self.is_authable(path) or not self.is_versionable(path) or self.options.version in path
         return path if ignore_versioning else self.replace_path(path)
 
     def _build_headers(self, headers: HeaderTypes) -> HeaderTypes:
@@ -106,13 +107,7 @@ class ApiCommon:
             headers = {ACCESS_TOKEN_HEADER: self.session.password, **headers}
         return {**self.options.headers, **headers}
 
-    def _build_request(
-        self,
-        method: str,
-        path: str,
-        params: UnionRequestData = {},
-        headers: HeaderTypes = {}
-    ) -> dict:
+    def _build_request(self, method: str, path: str, params: UnionRequestData = {}, headers: HeaderTypes = {}) -> dict:
         """
         Builds a request based on the method of request (GET/POST).
         """

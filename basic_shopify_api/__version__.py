@@ -1,2 +1,4 @@
+from importlib.metadata import version
+
 # Current version of libary
-VERSION = "1.0.1"
+VERSION = version("basic_shopify_api")

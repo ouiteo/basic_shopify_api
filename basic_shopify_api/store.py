@@ -1,24 +1,21 @@
-from .models import Session
 from abc import ABC, abstractmethod
-from typing import List
-from .types import StoreValue, StoreContainer
+
+from .models import Session
+from .types import StoreContainer, StoreValue
 
 
 class StateStore(ABC):
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Create the container.
         """
-
         self.container: StoreContainer = {}
 
     @abstractmethod
-    def all(self, session: Session) -> List[StoreValue]:
+    def all(self, session: Session) -> list[StoreValue]:
         """
         Get all entries for a session in the container.
         """
-
-        pass  # pragma: no cover
 
     @abstractmethod
     def append(self, session: Session, value: StoreValue) -> None:
@@ -26,19 +23,15 @@ class StateStore(ABC):
         Append an entry for a session to the container.
         """
 
-        pass  # pragma: no cover
-
     @abstractmethod
     def reset(self, session: Session) -> None:
         """
         Reset the container for a session back to empty.
         """
 
-        pass  # pragma: no cover
-
 
 class TimeMemoryStore(StateStore):
-    def all(self, session: Session) -> List[StoreValue]:
+    def all(self, session: Session) -> list[StoreValue]:
         domain = session.domain
         if domain not in self.container:
             # Trigger creation of dict for shop
@@ -57,7 +50,7 @@ class TimeMemoryStore(StateStore):
 
 
 class CostMemoryStore(StateStore):
-    def all(self, session: Session) -> List[StoreValue]:
+    def all(self, session: Session) -> list[StoreValue]:
         domain = session.domain
         if domain not in self.container:
             # Trigger creation of dict for shop

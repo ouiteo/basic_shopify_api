@@ -1,10 +1,13 @@
-from . import ApiCommon
-from ..options import Options
-from ..models import ApiResult, RestResult, Session
-from ..constants import REST, GRAPHQL
+from typing import Optional
+
 from httpx import AsyncClient as AsyncHttpxClient
-from httpx._types import HeaderTypes, QueryParamTypes
 from httpx._models import Response
+from httpx._types import HeaderTypes, QueryParamTypes
+
+from ..constants import GRAPHQL, REST
+from ..models import ApiResult, RestResult, Session
+from ..options import Options
+from . import ApiCommon
 
 
 class AsyncClient(AsyncHttpxClient, ApiCommon):
@@ -12,22 +15,16 @@ class AsyncClient(AsyncHttpxClient, ApiCommon):
     Sync client, extends the common client and HTTPX.
     """
 
-    def __init__(
-        self,
-        session: Session,
-        options: Options,
-        **kwargs
-    ):
+    def __init__(self, session: Session, options: Options, **kwargs) -> None:
         """
         Extend HTTPX's init and setup the client with base URL and auth.
         """
-
         self.session = session
         self.options = options
         super().__init__(
             base_url=self.session.base_url,
             auth=None if self.options.is_public else (self.session.key, self.session.password),
-            **kwargs
+            **kwargs,
         )
 
     async def _rest_rate_limit(self) -> None:
@@ -126,6 +123,7 @@ class AsyncClient(AsyncHttpxClient, ApiCommon):
                 inst_meth = getattr(inst, meth.__name__)
                 return await inst_meth(*args[1:], **kwargs)
             return result
+
         return wrapper
 
     @_retry_request
@@ -133,9 +131,9 @@ class AsyncClient(AsyncHttpxClient, ApiCommon):
         self,
         method: str,
         path: str,
-        params: QueryParamTypes = None,
+        params: Optional[QueryParamTypes] = None,
         headers: HeaderTypes = {},
-        _retries: int = 0
+        _retries: int = 0,
     ) -> RestResult:
         """
         Fire a REST API call.
@@ -155,11 +153,7 @@ class AsyncClient(AsyncHttpxClient, ApiCommon):
 
     @_retry_request
     async def graphql(
-        self,
-        query: str,
-        variables: dict = None,
-        headers: HeaderTypes = {},
-        _retries: int = 0,
+        self, query: str, variables: Optional[dict] = None, headers: HeaderTypes = {}, _retries: int = 0
     ) -> ApiResult:
         """
         Fire a GraphQL call.
