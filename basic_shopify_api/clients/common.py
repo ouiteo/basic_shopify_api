@@ -6,6 +6,7 @@ from httpx._types import HeaderTypes
 
 from ..constants import (
     ACCESS_TOKEN_HEADER,
+    DEFAULT_HEADERS,
     LINK_HEADER,
     LINK_PATTERN,
     NOT_AUTHABLE_PATTERN,
@@ -107,7 +108,9 @@ class ApiCommon:
             headers = {ACCESS_TOKEN_HEADER: self.session.password, **headers}
         return {**self.options.headers, **headers}
 
-    def _build_request(self, method: str, path: str, params: UnionRequestData = {}, headers: HeaderTypes = {}) -> dict:
+    def _build_request(
+        self, method: str, path: str, params: UnionRequestData = DEFAULT_HEADERS, headers: HeaderTypes = DEFAULT_HEADERS
+    ) -> dict:
         """
         Builds a request based on the method of request (GET/POST).
         """
@@ -238,26 +241,25 @@ class ApiCommon:
             )
         return ApiResult(**kwargs)
 
-    def _retry_required(self, response: Response, retries: int) -> Union[bool, float]:
+    def _retry_required(self, result: ApiResult, retries: int) -> Union[bool, float]:
         """
         Determine if a retry of the request is required.
         """
-
+        response = result.response
         if response.status_code in self.options.retry_on_status and retries < self.options.max_retries:
             # Status code is within the checks
             if RETRY_HEADER in response.headers:
                 # Use retry header timer since is available to use
                 return float(response.headers[RETRY_HEADER]) * ONE_SECOND
             return 0.0
-        elif response.status_code == 200:
-            result = response.json()
-            if "errors" in result:
-                codes = {error.get("extensions", {}).get("code") for error in result["errors"]}
-                if "THROTTLED" in codes:
-                    cost = response.json()["extensions"]["cost"]
-                    expected_query_cost = cost["requestedQueryCost"] + 10
-                    currently_available = cost["throttleStatus"]["currentlyAvailable"]
-                    restore_rate = cost["throttleStatus"]["restoreRate"]
-                    time_to_sleep = (expected_query_cost - currently_available) / restore_rate
-                    return float(time_to_sleep) * ONE_SECOND
+
+        elif isinstance(result, ApiResult) and isinstance(result.errors, list):
+            codes = {error.get("extensions", {}).get("code") for error in result.errors}
+            if "THROTTLED" in codes:
+                cost = response.json()["extensions"]["cost"]
+                expected_query_cost = cost["requestedQueryCost"] + 10
+                currently_available = cost["throttleStatus"]["currentlyAvailable"]
+                restore_rate = cost["throttleStatus"]["restoreRate"]
+                time_to_sleep = (expected_query_cost - currently_available) / restore_rate
+                return float(time_to_sleep) * ONE_SECOND
         return False

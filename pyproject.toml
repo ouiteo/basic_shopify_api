@@ -29,8 +29,11 @@ include = ["basic_shopify_api"]
 exclude = ["tests", "docs"]
 
 [tool.poetry.dependencies]
-python = ">=3.8"
+python = ">=3.9"
 httpx = ">=0.13"
+
+[tool.poetry.group.dev.dependencies]
+pytest-httpx = "^0.26.0"
 
 [tool.black]
 line-length = 120
@@ -59,6 +62,10 @@ addopts = "--pdbcls=IPython.terminal.debugger:TerminalPdb -p no:warnings --junit
 junit_family = "xunit2"
 norecursedirs = ".git .tox _resource .mypy_cache build dist docs"
 
+[tool.isort]
+profile = "black"
+line_length = 120
+
 [tool.flake8]
 max-complexity = 10
 ignore = ["C901", "W504", "W503", "E231", "E203"]
@@ -67,10 +74,10 @@ max-line-length = 120
 show-source = true
 statistics = false
 
-[tool.coverage.run]
+[tool.reports.run]
 omit = ["*/__init__.py", ".tox", ".mypy_cache", ".reports", ".git"]
 
-[tool.coverage.report]
+[tool.reports.report]
 omit = ["*/__init__.py", ".tox", ".mypy_cache", ".reports", ".git"]
 show_missing = true
 

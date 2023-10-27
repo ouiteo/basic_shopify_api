@@ -36,3 +36,6 @@ REST = "rest"
 
 # GraphQL API type
 GRAPHQL = "graphql"
+
+# Default headers
+DEFAULT_HEADERS: dict[str, str] = {}

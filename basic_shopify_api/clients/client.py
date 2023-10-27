@@ -4,11 +4,11 @@ from httpx import Client as HttpxClient
 from httpx._models import Response
 from httpx._types import HeaderTypes
 
-from ..constants import GRAPHQL, REST
+from ..constants import DEFAULT_HEADERS, GRAPHQL, REST
 from ..models import ApiResult, RestResult, Session
 from ..options import Options
 from ..types import UnionRequestData
-from . import ApiCommon
+from .common import ApiCommon
 
 
 class Client(HttpxClient, ApiCommon):
@@ -112,9 +112,8 @@ class Client(HttpxClient, ApiCommon):
             retries: int = kwargs.get("_retries", 0)
             # Run the call (rest or graphql)
             result: ApiResult = meth(*args, **kwargs)
-            # Get the response and determine if retry is required
-            response: Response = result.response
-            retry = inst._retry_required(response, retries)
+            # Determine if retry is required
+            retry = inst._retry_required(result, retries)
 
             if retry is not False:
                 # Retry is needed, sleep for X ms
@@ -134,7 +133,7 @@ class Client(HttpxClient, ApiCommon):
         method: str,
         path: str,
         params: Optional[UnionRequestData] = None,
-        headers: HeaderTypes = {},
+        headers: HeaderTypes = DEFAULT_HEADERS,
         _retries: int = 0,
     ) -> RestResult:
         """
@@ -152,7 +151,7 @@ class Client(HttpxClient, ApiCommon):
 
     @_retry_request
     def graphql(
-        self, query: str, variables: Optional[dict] = None, headers: HeaderTypes = {}, _retries: int = 0
+        self, query: str, variables: Optional[dict] = None, headers: HeaderTypes = DEFAULT_HEADERS, _retries: int = 0
     ) -> ApiResult:
         """
         Fire a GraphQL call.

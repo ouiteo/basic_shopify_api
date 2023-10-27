@@ -1,7 +1,7 @@
 from basic_shopify_api.utils import hmac_verify
 
 
-def test_hmac_verify_oauth():
+def test_hmac_verify_oauth() -> None:
     # From Shopify docs: 0Auth
     query_string = {
         "code": "0907a61c0c8d55e99db179b68161bc00",
@@ -13,7 +13,7 @@ def test_hmac_verify_oauth():
     assert hmac_verify("standard", "hush", query_string) is True
 
 
-def test_hmac_verify_proxy():
+def test_hmac_verify_proxy() -> None:
     # From Shopify docs: Proxy
     query_string = {
         "extra": ["1", "2"],
@@ -25,7 +25,7 @@ def test_hmac_verify_proxy():
     assert hmac_verify("proxy", "hush", query_string) is True
 
 
-def test_hmac_verify_webhook():
+def test_hmac_verify_webhook() -> None:
     # From Shopify docs: Webhook
     hmac_header_value = "b/rWdZdcB2yqHc0eitdWqmRDdepHw4phdZNa68NHBSY="
     assert hmac_verify("webhook", "hush", '{"xyz":"123"}', hmac_header_value) is True

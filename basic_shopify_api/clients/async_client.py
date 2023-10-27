@@ -4,15 +4,15 @@ from httpx import AsyncClient as AsyncHttpxClient
 from httpx._models import Response
 from httpx._types import HeaderTypes, QueryParamTypes
 
-from ..constants import GRAPHQL, REST
+from ..constants import DEFAULT_HEADERS, GRAPHQL, REST
 from ..models import ApiResult, RestResult, Session
 from ..options import Options
-from . import ApiCommon
+from .common import ApiCommon
 
 
 class AsyncClient(AsyncHttpxClient, ApiCommon):
     """
-    Sync client, extends the common client and HTTPX.
+    ASync client, extends the common client and HTTPX.
     """
 
     def __init__(self, session: Session, options: Options, **kwargs) -> None:
@@ -110,9 +110,8 @@ class AsyncClient(AsyncHttpxClient, ApiCommon):
             retries = kwargs.get("_retries", 0)
             # Run the call (rest or graphql)
             result: ApiResult = await meth(*args, **kwargs)
-            # Get the response and determine if retry is required
-            response = result.response
-            retry = inst._retry_required(response, retries)
+            # Determine if retry is required
+            retry = inst._retry_required(result, retries)
 
             if retry is not False:
                 # Retry is needed, sleep for X ms
@@ -132,7 +131,7 @@ class AsyncClient(AsyncHttpxClient, ApiCommon):
         method: str,
         path: str,
         params: Optional[QueryParamTypes] = None,
-        headers: HeaderTypes = {},
+        headers: HeaderTypes = DEFAULT_HEADERS,
         _retries: int = 0,
     ) -> RestResult:
         """
@@ -153,7 +152,7 @@ class AsyncClient(AsyncHttpxClient, ApiCommon):
 
     @_retry_request
     async def graphql(
-        self, query: str, variables: Optional[dict] = None, headers: HeaderTypes = {}, _retries: int = 0
+        self, query: str, variables: Optional[dict] = None, headers: HeaderTypes = DEFAULT_HEADERS, _retries: int = 0
     ) -> ApiResult:
         """
         Fire a GraphQL call.

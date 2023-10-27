@@ -8,7 +8,7 @@ COFF ?= \033[0m
 help: ## Display help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(CYAN)%-30s$(COFF) %s\n", $$1, $$2}'
 
-deps: ## Install dependencies
+deps: ## nstall dependencies
 	@printf "$(CYAN)Updating python deps$(COFF)\n"
 	pip3 install -U pip poetry
 	@poetry install

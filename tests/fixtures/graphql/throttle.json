@@ -1,0 +1,23 @@
+{
+    "data": null,
+    "errors": [
+        {
+            "message": "Internal error. Looks like something went wrong on our end.",
+            "extensions": {
+                "code": "THROTTLED",
+                "requestId": "d2f47302-8559-4961-9a5b-3de60172aa29"
+            }
+        }
+    ],
+    "extensions": {
+        "cost": {
+            "requestedQueryCost": 1,
+            "actualQueryCost": 1,
+            "throttleStatus": {
+                "maximumAvailable": 2,
+                "currentlyAvailable": 1,
+                "restoreRate": 50.0
+            }
+        }
+    }
+}
