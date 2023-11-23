@@ -1,11 +1,14 @@
-from . import ApiCommon
-from ..options import Options
-from ..models import RestResult, ApiResult, Session
-from ..types import UnionRequestData
-from ..constants import REST, GRAPHQL
+from typing import Any
+
 from httpx import Client as HttpxClient
-from httpx._types import HeaderTypes
 from httpx._models import Response
+from httpx._types import HeaderTypes
+
+from ..constants import GRAPHQL, REST
+from ..models import ApiResult, RestResult, Session
+from ..options import Options
+from ..types import UnionRequestData
+from . import ApiCommon
 
 
 class Client(HttpxClient, ApiCommon):
@@ -13,12 +16,7 @@ class Client(HttpxClient, ApiCommon):
     Sync client, extends the common client and HTTPX.
     """
 
-    def __init__(
-        self,
-        session: Session,
-        options: Options,
-        **kwargs
-    ):
+    def __init__(self, session: Session, options: Options, **kwargs):
         """
         Extend HTTPX's init and setup the client with base URL and auth.
         """
@@ -127,6 +125,7 @@ class Client(HttpxClient, ApiCommon):
                 inst_meth = getattr(inst, meth.__name__)
                 return inst_meth(*args[1:], **kwargs)
             return result
+
         return wrapper
 
     @_retry_request
@@ -136,7 +135,8 @@ class Client(HttpxClient, ApiCommon):
         path: str,
         params: UnionRequestData = None,
         headers: HeaderTypes = {},
-        _retries: int = 0
+        _retries: int = 0,
+        **httpx_kwargs: dict[str, Any]
     ) -> RestResult:
         """
         Fire a REST API call.
@@ -145,7 +145,8 @@ class Client(HttpxClient, ApiCommon):
         # Dynamically map to HTTPX's method for get/post/put/etc
         meth = getattr(self, method)
         # Build the request based on the method and inputs
-        kwargs = self._build_request(method, path, params, headers)
+        kwargs = self._build_request(method, path, params, headers, **httpx_kwargs)
+
         # Run the pre-actions
         self._rest_pre_actions(**kwargs)
         # Run the call and post-actions, and return the result
@@ -158,6 +159,7 @@ class Client(HttpxClient, ApiCommon):
         variables: dict = None,
         headers: HeaderTypes = {},
         _retries: int = 0,
+        **httpx_kwargs: dict[str, Any]
     ) -> ApiResult:
         """
         Fire a GraphQL call.
@@ -165,10 +167,7 @@ class Client(HttpxClient, ApiCommon):
 
         # Build the request
         kwargs = self._build_request(
-            "post",
-            "/admin/api/graphql.json",
-            {"query": query, "variables": variables},
-            headers,
+            "post", "/admin/api/graphql.json", {"query": query, "variables": variables}, headers, **httpx_kwargs
         )
         # Run the pre-actions
         self._graphql_pre_actions(**kwargs)

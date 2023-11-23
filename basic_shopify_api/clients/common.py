@@ -1,16 +1,14 @@
-from ..constants import NOT_AUTHABLE_PATTERN, \
-    NOT_VERSIONABLE_PATTERN, \
-    LINK_PATTERN, \
-    ACCESS_TOKEN_HEADER, \
-    ONE_SECOND, \
-    RETRY_HEADER
-from ..types import UnionRequestData, ParsedBody
-from ..models import RestLink, RestResult, ApiResult
-from ..constants import REST, LINK_HEADER
-from httpx._types import HeaderTypes
-from httpx._models import Response
-from typing import Pattern, Union, Optional
 import re
+from typing import Optional, Pattern, Union
+
+from httpx._models import Response
+from httpx._types import HeaderTypes
+
+from ..constants import (ACCESS_TOKEN_HEADER, LINK_HEADER, LINK_PATTERN,
+                         NOT_AUTHABLE_PATTERN, NOT_VERSIONABLE_PATTERN,
+                         ONE_SECOND, REST, RETRY_HEADER)
+from ..models import ApiResult, RestLink, RestResult
+from ..types import ParsedBody, UnionRequestData
 
 
 class ApiCommon:
@@ -111,7 +109,8 @@ class ApiCommon:
         method: str,
         path: str,
         params: UnionRequestData = {},
-        headers: HeaderTypes = {}
+        headers: HeaderTypes = {},
+        **httpx_kwargs
     ) -> dict:
         """
         Builds a request based on the method of request (GET/POST).
@@ -127,6 +126,9 @@ class ApiCommon:
         else:
             # POST, send as JSON
             kwargs["json"] = params
+
+        kwargs.update(httpx_kwargs)
+
         return kwargs
 
     def _rest_extract_link(self, headers: HeaderTypes) -> RestLink:
