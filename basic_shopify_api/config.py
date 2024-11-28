@@ -4,9 +4,10 @@ from http import HTTPStatus
 from .constants import ALT_MODE, DEFAULT_MODE, DEFAULT_VERSION, VERSION_PATTERN
 from .deferrer import SleepDeferrer
 from .store import CostMemoryStore, TimeMemoryStore
+from .types import PostCallback, PreCallback
 
 
-class Options:
+class Config:
     max_retries: int
     retry_on_status: list[int]
     headers: dict[str, str]
@@ -15,10 +16,10 @@ class Options:
     deferrer: SleepDeferrer
     rest_limit: int
     graphql_limit: int
-    rest_pre_actions: list[callable]
-    rest_post_actions: list[callable]
-    graphql_pre_actions: list[callable]
-    graphql_post_actions: list[callable]
+    rest_pre_actions: list[PreCallback] = []
+    rest_post_actions: list[PostCallback] = []
+    graphql_pre_actions: list[PreCallback] = []
+    graphql_post_actions: list[PostCallback] = []
 
     # internals
     _version: str

@@ -1,22 +1,22 @@
 import pytest
 
-from basic_shopify_api import Options
+from basic_shopify_api import Config
 
 
 def test_options_version() -> None:
-    opts = Options()
+    opts = Config()
     opts.version = "unstable"
     assert opts.version == "unstable"
 
 
 def test_options_failed_version() -> None:
     with pytest.raises(ValueError):
-        opts = Options()
+        opts = Config()
         opts.version = "oops"
 
 
 def test_options_type() -> None:
-    opts = Options()
+    opts = Config()
 
     # Public test
     opts.mode = "public"
@@ -33,5 +33,5 @@ def test_options_type() -> None:
 
 def test_options_failed_type() -> None:
     with pytest.raises(ValueError):
-        opts = Options()
+        opts = Config()
         opts.mode = "oops"

@@ -1,12 +1,12 @@
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, cast
 
 from httpx import AsyncClient as AsyncHttpxClient
 from httpx._models import Response
 from httpx._types import HeaderTypes, QueryParamTypes
 
+from ..config import Config
 from ..constants import DEFAULT_HEADERS, GRAPHQL, REST
 from ..models import ApiResult, RestResult, Session
-from ..options import Options
 from .common import ApiCommon
 
 
@@ -15,15 +15,15 @@ class AsyncClient(AsyncHttpxClient, ApiCommon):
     ASync client, extends the common client and HTTPX.
     """
 
-    def __init__(self, session: Session, options: Options, **kwargs) -> None:
+    def __init__(self, session: Session, config: Config, **kwargs) -> None:
         """
         Extend HTTPX's init and setup the client with base URL and auth.
         """
         self.session = session
-        self.options = options
+        self.config = config
         super().__init__(
             base_url=self.session.base_url,
-            auth=None if self.options.is_public else (self.session.key, self.session.password),
+            auth=None if self.config.is_public else (self.session.key, self.session.password),
             **kwargs,
         )
 
@@ -35,7 +35,7 @@ class AsyncClient(AsyncHttpxClient, ApiCommon):
         limiting_required = self._rest_rate_limit_required()
         if limiting_required is not False:
             # Rate limit was determined to be required, sleep for X ms
-            await self.options.deferrer.asleep(limiting_required)
+            await self.config.deferrer.asleep(limiting_required)
 
     async def _graphql_cost_limit(self) -> None:
         """
@@ -45,7 +45,7 @@ class AsyncClient(AsyncHttpxClient, ApiCommon):
         limiting_required = self._graphql_cost_limit_required()
         if limiting_required is not False:
             # Cost limit was determined to be required, sleep for X ms
-            await self.options.deferrer.asleep(limiting_required)
+            await self.config.deferrer.asleep(limiting_required)
 
     async def _rest_pre_actions(self, **kwargs) -> None:
         """
@@ -55,9 +55,9 @@ class AsyncClient(AsyncHttpxClient, ApiCommon):
         # Determine if rate limiting is required and handle it
         await self._rest_rate_limit()
         # Add to the request times
-        self.options.time_store.append(self.session, self.options.deferrer.current_time())
+        self.config.time_store.append(self.session, self.config.deferrer.current_time())
         # Run user-defined actions and pass in the request built
-        [await meth(self, **kwargs) for meth in self.options.rest_pre_actions]
+        [await meth(self, **kwargs) for meth in self.config.rest_pre_actions]
 
     async def _graphql_pre_actions(self, **kwargs) -> None:
         """
@@ -67,9 +67,9 @@ class AsyncClient(AsyncHttpxClient, ApiCommon):
         # Determine if cost limiting is required and handle it
         await self._graphql_cost_limit()
         # Add to the request times
-        self.options.time_store.append(self.session, self.options.deferrer.current_time())
+        self.config.time_store.append(self.session, self.config.deferrer.current_time())
         # Run user-defined actions and pass in the request built
-        [await meth(self, **kwargs) for meth in self.options.graphql_pre_actions]
+        [await meth(self, **kwargs) for meth in self.config.graphql_pre_actions]
 
     async def _rest_post_actions(self, response: Response, retries: int) -> RestResult:
         """
@@ -78,8 +78,11 @@ class AsyncClient(AsyncHttpxClient, ApiCommon):
 
         # Parse the response from HTTPX
         result = self._parse_response(REST, response, retries)
+        result = cast(RestResult, result)
+
         # Run user-defined actions and pass in the result object
-        [await meth(self, result) for meth in self.options.rest_post_actions]
+        [await meth(self, result) for meth in self.config.rest_post_actions]
+
         return result
 
     async def _graphql_post_actions(self, response: Response, retries: int) -> ApiResult:
@@ -89,10 +92,13 @@ class AsyncClient(AsyncHttpxClient, ApiCommon):
 
         # Parse the response from HTTPX
         result = self._parse_response(GRAPHQL, response, retries)
+
+        result = cast(ApiResult, result)
+
         # Add to the costs
         self._cost_update(result.body)
         # Run user-defined actions and pass in the result object
-        [await meth(self, result) for meth in self.options.graphql_post_actions]
+        [await meth(self, result) for meth in self.config.graphql_post_actions]
         return result
 
     @staticmethod

@@ -4,6 +4,8 @@ from typing import Optional, Pattern, Union
 from httpx._models import Response
 from httpx._types import HeaderTypes
 
+from basic_shopify_api.config import Config
+
 from ..constants import (
     ACCESS_TOKEN_HEADER,
     DEFAULT_HEADERS,
@@ -24,6 +26,8 @@ class ApiCommon:
     A common class shared between all clients to help prevent duplicated
     code between sync and async.
     """
+
+    config: Config
 
     @property
     def _regex_not_authable(self) -> Pattern:
@@ -77,7 +81,7 @@ class ApiCommon:
             path: The URL path.
         """
 
-        return path.replace("/api", f"/api/{self.options.version}")
+        return path.replace("/api", f"/api/{self.config.version}")
 
     def version_path(self, path: str, ignore_check: bool = False) -> str:
         """
@@ -91,7 +95,7 @@ class ApiCommon:
         if ignore_check:
             return self.replace_path(path)
 
-        ignore_versioning = not self.is_authable(path) or not self.is_versionable(path) or self.options.version in path
+        ignore_versioning = not self.is_authable(path) or not self.is_versionable(path) or self.config.version in path
         return path if ignore_versioning else self.replace_path(path)
 
     def _build_headers(self, headers: HeaderTypes) -> HeaderTypes:
@@ -104,9 +108,9 @@ class ApiCommon:
             headers: Dict of headers to add to the request.
         """
 
-        if self.options.is_public:
+        if self.config.is_public:
             headers = {ACCESS_TOKEN_HEADER: self.session.password, **headers}
-        return {**self.options.headers, **headers}
+        return {**self.config.headers, **headers}
 
     def _build_request(
         self, method: str, path: str, params: UnionRequestData = DEFAULT_HEADERS, headers: HeaderTypes = DEFAULT_HEADERS
@@ -153,17 +157,17 @@ class ApiCommon:
         If the request is outside the window, we allow it and reset the request times.
         """
 
-        all_time = self.options.time_store.all(self.session)
-        if len(all_time) < self.options.rest_limit:
+        all_time = self.config.time_store.all(self.session)
+        if len(all_time) < self.config.rest_limit:
             # Number of requests is below the limit, no limiting required
             return False
 
         # We've reached the limit, lets see if the request happened within or outside the window of time
-        current_time = self.options.deferrer.current_time()
+        current_time = self.config.deferrer.current_time()
         window_time = all_time[0] + ONE_SECOND
 
         # Reset the request times, return result... False = no limiting, else limit for X ms
-        self.options.time_store.reset(self.session)
+        self.config.time_store.reset(self.session)
         return False if current_time > window_time else window_time - current_time
 
     def _graphql_cost_limit_required(self) -> Union[bool, int]:
@@ -182,20 +186,20 @@ class ApiCommon:
         In both cases, request times and costing is reset.
         """
 
-        all_time = self.options.time_store.all(self.session)
-        all_cost = self.options.cost_store.all(self.session)
+        all_time = self.config.time_store.all(self.session)
+        all_cost = self.config.cost_store.all(self.session)
         if len(all_time) == 0 or len(all_cost) == 0:
             # Nothing was done to warrant checking
             return False
 
         # Determine time difference between last request and current
         last_time, last_cost = all_time[-1], all_cost[-1]
-        time_diff = self.options.deferrer.current_time() - last_time
-        points_per_sec = self.options.graphql_limit
+        time_diff = self.config.deferrer.current_time() - last_time
+        points_per_sec = self.config.graphql_limit
 
         # Reset request times and costing, return if sleeping should happen or not
-        self.options.time_store.reset(self.session)
-        self.options.cost_store.reset(self.session)
+        self.config.time_store.reset(self.session)
+        self.config.cost_store.reset(self.session)
         return False if time_diff > ONE_SECOND or last_cost < points_per_sec else ONE_SECOND - time_diff
 
     def _cost_update(self, body: Optional[ParsedBody]) -> None:
@@ -205,7 +209,7 @@ class ApiCommon:
 
         if body is None or "extensions" not in body:
             return
-        self.options.cost_store.append(self.session, int(body["extensions"]["cost"]["actualQueryCost"]))
+        self.config.cost_store.append(self.session, int(body["extensions"]["cost"]["actualQueryCost"]))
 
     def _parse_response(self, api: str, response: Response, retries: int) -> Union[ApiResult, RestResult]:
         """
@@ -246,7 +250,7 @@ class ApiCommon:
         Determine if a retry of the request is required.
         """
         response = result.response
-        if response.status_code in self.options.retry_on_status and retries < self.options.max_retries:
+        if response.status_code in self.config.retry_on_status and retries < self.config.max_retries:
             # Status code is within the checks
             if RETRY_HEADER in response.headers:
                 # Use retry header timer since is available to use

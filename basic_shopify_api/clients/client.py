@@ -4,9 +4,9 @@ from httpx import Client as HttpxClient
 from httpx._models import Response
 from httpx._types import HeaderTypes
 
+from ..config import Config
 from ..constants import DEFAULT_HEADERS, GRAPHQL, REST
 from ..models import ApiResult, RestResult, Session
-from ..options import Options
 from ..types import UnionRequestData
 from .common import ApiCommon
 
@@ -16,16 +16,16 @@ class Client(HttpxClient, ApiCommon):
     Sync client, extends the common client and HTTPX.
     """
 
-    def __init__(self, session: Session, options: Options, **kwargs) -> None:
+    def __init__(self, session: Session, options: Config, **kwargs) -> None:
         """
         Extend HTTPX's init and setup the client with base URL and auth.
         """
 
         self.session = session
-        self.options = options
+        self.config = options
         super().__init__(
             base_url=self.session.base_url,
-            auth=None if self.options.is_public else (self.session.key, self.session.password),
+            auth=None if self.config.is_public else (self.session.key, self.session.password),
             **kwargs,
         )
 
@@ -37,7 +37,7 @@ class Client(HttpxClient, ApiCommon):
         limiting_required = self._rest_rate_limit_required()
         if limiting_required is not False:
             # Rate limit was determined to be required, sleep for X ms
-            self.options.deferrer.sleep(limiting_required)
+            self.config.deferrer.sleep(limiting_required)
 
     def _graphql_cost_limit(self) -> None:
         """
@@ -47,7 +47,7 @@ class Client(HttpxClient, ApiCommon):
         limiting_required = self._graphql_cost_limit_required()
         if limiting_required is not False:
             # Cost limit was determined to be required, sleep for X ms
-            self.options.deferrer.sleep(limiting_required)
+            self.config.deferrer.sleep(limiting_required)
 
     def _rest_pre_actions(self, **kwargs) -> None:
         """
@@ -57,9 +57,9 @@ class Client(HttpxClient, ApiCommon):
         # Determine if rate limiting is required and handle it
         self._rest_rate_limit()
         # Add to the request times
-        self.options.time_store.append(self.session, self.options.deferrer.current_time())
+        self.config.time_store.append(self.session, self.config.deferrer.current_time())
         # Run user-defined actions and pass in the request built
-        [meth(self, **kwargs) for meth in self.options.rest_pre_actions]
+        [meth(self, **kwargs) for meth in self.config.rest_pre_actions]
 
     def _graphql_pre_actions(self, **kwargs) -> None:
         """
@@ -69,9 +69,9 @@ class Client(HttpxClient, ApiCommon):
         # Determine if cost limiting is required and handle it
         self._graphql_cost_limit()
         # Add to the request times
-        self.options.time_store.append(self.session, self.options.deferrer.current_time())
+        self.config.time_store.append(self.session, self.config.deferrer.current_time())
         # Run user-defined actions and pass in the request built
-        [meth(self, **kwargs) for meth in self.options.graphql_pre_actions]
+        [meth(self, **kwargs) for meth in self.config.graphql_pre_actions]
 
     def _rest_post_actions(self, response: Response, retries: int) -> RestResult:
         """
@@ -81,7 +81,7 @@ class Client(HttpxClient, ApiCommon):
         # Parse the response from HTTPX
         result = self._parse_response(REST, response, retries)
         # Run user-defined actions and pass in the result object
-        [meth(self, result) for meth in self.options.rest_post_actions]
+        [meth(self, result) for meth in self.config.rest_post_actions]
         return result
 
     def _graphql_post_actions(self, response: Response, retries: int) -> ApiResult:
@@ -94,7 +94,7 @@ class Client(HttpxClient, ApiCommon):
         # Add to the costs
         self._cost_update(result.body)
         # Run user-defined actions and pass in the result object
-        [meth(self, result) for meth in self.options.graphql_post_actions]
+        [meth(self, result) for meth in self.config.graphql_post_actions]
         return result
 
     @staticmethod

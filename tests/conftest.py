@@ -9,9 +9,9 @@ from pytest_httpx import HTTPXMock
 
 from basic_shopify_api.clients.async_client import AsyncClient
 from basic_shopify_api.clients.client import Client
+from basic_shopify_api.config import Config
 from basic_shopify_api.constants import DEFAULT_MODE
 from basic_shopify_api.models import Session
-from basic_shopify_api.options import Options
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
@@ -83,7 +83,7 @@ def mock_shopify(httpx_mock: HTTPXMock) -> None:
 
 @pytest.fixture
 def shopify_client() -> Generator[Client, None, None]:
-    opts = Options()
+    opts = Config()
     opts.mode = DEFAULT_MODE
     sess = Session("example.myshopify.com", "abc", "123")
 
@@ -93,7 +93,7 @@ def shopify_client() -> Generator[Client, None, None]:
 
 @pytest.fixture
 def ashopify_client() -> Generator[AsyncClient, None, None]:
-    opts = Options()
+    opts = Config()
     opts.mode = DEFAULT_MODE
     sess = Session("example.myshopify.com", "abc", "123")
 
