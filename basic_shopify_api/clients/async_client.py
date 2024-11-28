@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Callable, Optional
 
 from httpx import AsyncClient as AsyncHttpxClient
 from httpx._models import Response
@@ -95,7 +95,8 @@ class AsyncClient(AsyncHttpxClient, ApiCommon):
         [await meth(self, result) for meth in self.options.graphql_post_actions]
         return result
 
-    def _retry_request(meth: callable) -> callable:
+    @staticmethod
+    def _retry_request(meth: Callable[..., Any]) -> Callable[..., Any]:
         """
         Determine if retry is required.
 

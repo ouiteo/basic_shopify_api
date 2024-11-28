@@ -9,6 +9,8 @@ from pytest_httpx import HTTPXMock
 from basic_shopify_api.clients.async_client import AsyncClient
 from basic_shopify_api.clients.client import Client
 
+from ..basic_shopify_api.constants import RETRY_HEADER
+
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
@@ -36,7 +38,7 @@ def test_graphql_retry(shopify_client: Client, httpx_mock: HTTPXMock) -> None:
     httpx_mock.add_response(
         url=re.compile(r".*/graphql.json"),
         status_code=200,
-        json=json.load(open(FIXTURES_DIR / "graphql" / "throttle.json"))
+        json=json.load(open(FIXTURES_DIR / "graphql" / "throttle.json")),
     )
 
     response = shopify_client.graphql(query="{ shop { name } }")
@@ -58,9 +60,9 @@ def test_graphql_cost_limit(shopify_client: Client) -> None:
 
 
 def test_rest_retry_header(shopify_client: Client, httpx_mock: HTTPXMock) -> None:
-    httpx_mock.add_response(url=re.compile(r".*/shop.json"), status_code=HTTPStatus.BAD_GATEWAY.value, headers={
-        RETRY_HEADER: "1.0",
-    })
+    httpx_mock.add_response(
+        url=re.compile(r".*/shop.json"), status_code=HTTPStatus.BAD_GATEWAY.value, headers={RETRY_HEADER: "1.0"}
+    )
 
     response = shopify_client.rest(method="get", path="/admin/shop.json")
 

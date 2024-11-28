@@ -37,19 +37,18 @@ pytest-httpx = "^0.26.0"
 
 [tool.black]
 line-length = 120
-target-version = ['py311']
+target-version = ['py312']
 
 [tool.poetry.dev-dependencies]
-flake8-pyproject = "^1.2.3"
 mypy = "^1.6.1"
 ipdb = "^0.13.13"
-black = "^23.10.1"
 pytest = "^7.4.3"
 pytest-cov = "^4.1.0"
 pytest-asyncio = "^0.21.1"
 tox = "^4.11.3"
 coveralls = "^3.3.1"
 mkdocs = "^1.5.3"
+ruff = "*"                      # linter and code formatter
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/ouiteo/basic_shopify_api/issues"
@@ -62,17 +61,27 @@ addopts = "--pdbcls=IPython.terminal.debugger:TerminalPdb -p no:warnings --junit
 junit_family = "xunit2"
 norecursedirs = ".git .tox _resource .mypy_cache build dist docs"
 
-[tool.isort]
-profile = "black"
-line_length = 120
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+extend-exclude = ["migrations"]
 
-[tool.flake8]
-max-complexity = 10
-ignore = ["C901", "W504", "W503", "E231", "E203"]
-exclude = [".git", ".tox", "_resource", "build", "dist", "docs"]
-max-line-length = 120
-show-source = true
-statistics = false
+[tool.ruff.lint]
+select = [
+    "E",    # PEP8 errors
+    "W",    # PEP8 warnings
+    "F",    # PyFlakes
+    "I",    # isort
+    "C",    # mccabe
+    "T201", # flake8-print
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["basic_shopify_api"]
+known-local-folder = ["tests"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 11
 
 [tool.reports.run]
 omit = ["*/__init__.py", ".tox", ".mypy_cache", ".reports", ".git"]
@@ -90,7 +99,8 @@ envlist =
     python3.9
     python3.10
     python3.11
-    coveralls-python3.11,
+    python3.12
+    coveralls-python3.12,
 skipsdist = True
 
 [gh-actions]
@@ -99,27 +109,30 @@ python =
     3.9: python3.9
     3.10: python3.10
     3.11: python3.11
+    3.12: python3.12
 
 [testenv]
 setenv =
     PYTHONPATH = {toxinidir}
 commands =
-    {envpython} -m flake8 basic_shopify_api --max-line-length 120
+    {envpython} -m ruff format --check basic_shopify_api tests
+    {envpython} -m ruff check basic_shopify_api tests
     {envpython} -m pytest
+
 deps =
     flake8-pyproject
     pytest
     pytest-cov
     coveralls
     mypy
-    black
+    ruff
     httpx
 
-[testenv:coveralls-python3.11]
+[testenv:coveralls-python3.12]
 passenv = COVERALLS_REPO_TOKEN
 commands =
     - mypy basic_shopify_api --ignore-missing-imports
-    black --check basic_shopify_api tests --target-version py311 --line-length 120
+    black --check basic_shopify_api tests --target-version py312 --line-length 120
     pytest
     - coveralls
 """

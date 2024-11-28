@@ -24,19 +24,13 @@ def assert_all_responses_were_requested() -> bool:
 @pytest.fixture
 def error_factory() -> Callable[..., dict]:
     def factory(code: str = "THROTTLED") -> dict:
-        return {
-            "errors": [{
-                "message": "Bad stuff happened",
-                "extensions": {"code": code, "requestId": str(uuid4())}
-            }]
-        }
+        return {"errors": [{"message": "Bad stuff happened", "extensions": {"code": code, "requestId": str(uuid4())}}]}
 
     return factory
 
 
 @pytest.fixture
 def mocked_graphql(httpx_mock: HTTPXMock) -> Callable[[str], None]:
-
     def factory(fixture: Optional[str] = None, data: Optional[dict[str, Any]] = None) -> None:
         if fixture:
             data = json.load(open(FIXTURES_DIR / "graphql" / fixture))
@@ -45,7 +39,7 @@ def mocked_graphql(httpx_mock: HTTPXMock) -> Callable[[str], None]:
             url="https://example.myshopify.com/admin/api/2020-04/graphql.json",
             method="POST",
             status_code=200,
-            json=data
+            json=data,
         )
 
     return factory

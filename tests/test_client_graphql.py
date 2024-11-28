@@ -14,7 +14,7 @@ def test_graphql_return(shopify_client: Client, httpx_mock: HTTPXMock) -> None:
         url="https://example.myshopify.com/admin/api/2020-04/graphql.json",
         method="POST",
         status_code=200,
-        json=json.load(open(FIXTURES_DIR / "graphql" / "post_graphql.json"))
+        json=json.load(open(FIXTURES_DIR / "graphql" / "post_graphql.json")),
     )
 
     response = shopify_client.graphql("{ shop { name } }")
@@ -30,7 +30,7 @@ async def test_graphql_async_return(ashopify_client: AsyncClient, httpx_mock: HT
         url="https://example.myshopify.com/admin/api/2020-04/graphql.json",
         method="POST",
         status_code=200,
-        json=json.load(open(FIXTURES_DIR / "graphql" / "post_graphql.json"))
+        json=json.load(open(FIXTURES_DIR / "graphql" / "post_graphql.json")),
     )
 
     response = await ashopify_client.graphql("{ shop { name } }")
