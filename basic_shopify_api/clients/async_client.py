@@ -1,3 +1,4 @@
+from typing import Any
 from . import ApiCommon
 from ..options import Options
 from ..models import ApiResult, RestResult, Session
@@ -179,3 +180,54 @@ class AsyncClient(AsyncHttpxClient, ApiCommon):
         response = await self.post(**kwargs)
         result = await self._graphql_post_actions(response, _retries)
         return result
+
+    @staticmethod
+    def parse_query(query: str) -> str:
+        return " ".join([x.strip() for x in query.split("\n")])
+
+    async def graphql_call_with_pagination(
+        self, entity: str, query: str, variables: dict[str, Any] = {}, max_limit: int | None = None
+    ) -> list[dict[str, Any]] | None:
+        """
+        Make a graphql query with pagination
+
+        :param entity: The entity to fetch, e.g "products", "orders"
+        :param query: The query to run
+        :param variables: The variables to pass to the query
+
+        :return: A list of entity data
+        """
+        has_next_page = True
+        end_cursor: str | None = None
+        data = []
+
+        query = self.parse_query(query)
+        
+        while has_next_page:
+            variables["cursor"] = end_cursor
+
+            response = await self.graphql(query, variables)
+            if not response.body:
+                return None
+
+            entity_path = entity.split(".")
+            entity_data = response.body.get("data", {})
+
+            for key in entity_path:
+                entity_data = entity_data.get(key, {})
+                if not entity_data:
+                    return None
+
+            page_info = entity_data.get("pageInfo", {})
+
+            has_next_page = page_info.get("hasNextPage", False)
+            end_cursor = page_info.get("endCursor", None)
+            entity_data.pop("pageInfo", None)
+
+            for edge in entity_data.get("edges", []):
+                data.append(edge.get("node", {}))
+
+            if max_limit and len(data) >= max_limit:
+                return data[:max_limit]
+
+        return data
