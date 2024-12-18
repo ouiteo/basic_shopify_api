@@ -181,10 +181,6 @@ class AsyncClient(AsyncHttpxClient, ApiCommon):
         result = await self._graphql_post_actions(response, _retries)
         return result
 
-    @staticmethod
-    def parse_query(query: str) -> str:
-        return " ".join([x.strip() for x in query.split("\n")])
-
     async def graphql_call_with_pagination(
         self, entity: str, query: str, variables: dict[str, Any] = {}, max_limit: int | None = None
     ) -> list[dict[str, Any]] | None:

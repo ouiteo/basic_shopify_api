@@ -268,3 +268,7 @@ class ApiCommon:
                     time_to_sleep = (expected_query_cost - currently_available) / restore_rate
                     return float(time_to_sleep) * ONE_SECOND
         return False
+
+    @staticmethod
+    def parse_query(query: str) -> str:
+        return " ".join([x.strip() for x in query.split("\n")])
