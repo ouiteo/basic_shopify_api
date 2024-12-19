@@ -22,3 +22,13 @@ async def test_graphql_async_return(local_server):
         assert isinstance(response.body, dict)
         assert response.body["data"]["shop"]["name"] == "Apple Computers"
         assert response.errors is None
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("max_limit", [(1), (2)])
+@pytest.mark.usefixtures("local_server")
+@async_local_server_session
+async def test_graphql_pagination_data(local_server, mock_graphql_response, max_limit: int):
+    async with AsyncClient(*generate_opts_and_sess()) as c:
+        mock_graphql_response("product.json")
+        response = await c.graphql_call_with_pagination("products", "Query", {}, max_limit)
+        assert len(response)==max_limit
