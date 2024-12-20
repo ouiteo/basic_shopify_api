@@ -1,3 +1,4 @@
+from http import HTTPStatus
 import pytest
 from json import JSONDecodeError
 from basic_shopify_api import Client, AsyncClient
@@ -54,12 +55,11 @@ def test_rest_error_return(local_server):
 
         response = c.rest("get", "/admin/api/errors.json")
         assert response.body is None
-        assert response.errors == "Not found"
+        assert response.errors[0]["status"] == HTTPStatus.BAD_REQUEST
 
         response = c.rest("get", "/admin/api/decode_error.json")
         assert response.body is None
-        assert isinstance(response.errors, JSONDecodeError)
-
+        assert JSONDecodeError(**response.errors[0]["error"])
 
 @pytest.mark.asyncio
 @pytest.mark.usefixtures("local_server")
