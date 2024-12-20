@@ -15,3 +15,4 @@ twine
 pypandoc
 pdoc
 jsonlines
+pytest-httpx
