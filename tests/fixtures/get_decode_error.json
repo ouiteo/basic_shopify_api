@@ -1,3 +1,11 @@
-
-    "errors": "Not found"
+{
+    "errors": [
+        {
+            "error": {
+              "msg": "Expecting ',' delimiter",
+              "doc": "{\"key1\": \"value1\" \"key2\": \"value2\"}",
+              "pos": 18
+            }
+          }
+    ]
 }
