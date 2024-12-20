@@ -27,8 +27,20 @@ async def test_graphql_async_return(local_server):
 @pytest.mark.parametrize("max_limit", [(1), (2)])
 @pytest.mark.usefixtures("local_server")
 @async_local_server_session
-async def test_graphql_pagination_data(local_server, mock_graphql_response, max_limit: int):
+async def test_graphql_pagination_data(local_server, mock_graphql_response, max_limit: int) -> None:
     async with AsyncClient(*generate_opts_and_sess()) as c:
         mock_graphql_response("product.json")
         response = await c.graphql_call_with_pagination("products", "Query", {}, max_limit)
         assert len(response)==max_limit
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("job_status, expected", [("RUNNING", True), ("COMPLETED", False)])
+@pytest.mark.usefixtures("local_server")
+@async_local_server_session
+async def test_is_bulk_job_running(local_server, mock_graphql_response, job_status: str, expected: bool) -> None:
+    async with AsyncClient(*generate_opts_and_sess()) as c:
+        mock_graphql_response(f"bulk_job_{job_status.lower()}.json")
+        response = await c.is_bulk_job_running("QUERY")
+        assert response == expected
+        
