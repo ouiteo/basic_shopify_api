@@ -1,7 +1,10 @@
+from unittest.mock import AsyncMock
 import pytest
 from .utils import generate_opts_and_sess, local_server_session, async_local_server_session
 from basic_shopify_api import Client, AsyncClient
 from pytest_httpx._httpx_mock import HTTPXMock
+from httpx import Response as HttpxResponse
+import jsonlines
 
 @pytest.mark.usefixtures("local_server")
 @local_server_session
@@ -58,3 +61,21 @@ async def test_poll_until_complete(local_server, mock_graphql_response, httpx_mo
         httpx_mock.add_response(url=url, text=mocked_response)
         response = await c.poll_until_complete(job_id, "QUERY")
         assert response.text == mocked_response
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("expected_type, wait", [(str, False), (jsonlines.Reader, True)])
+@pytest.mark.usefixtures("local_server")
+@async_local_server_session
+async def test_run_bulk_operation_query(local_server, mock_graphql_response, monkeypatch: pytest.MonkeyPatch, expected_type, wait) -> None:
+    async with AsyncClient(*generate_opts_and_sess()) as c:
+        mock_graphql_response(f"bulk_submit_query.json")
+
+        job_running = AsyncMock(return_value=False)
+        monkeypatch.setattr("basic_shopify_api.clients.async_client.AsyncClient.is_bulk_job_running", job_running)
+
+        complete_response = AsyncMock(return_value=HttpxResponse(status_code=204, content=b'{"data": {"entity": "data"}}'))
+        monkeypatch.setattr("basic_shopify_api.clients.async_client.AsyncClient.poll_until_complete", complete_response)
+        
+        response = await c.run_bulk_operation_query("query", {}, wait)
+        assert isinstance(response, expected_type)
