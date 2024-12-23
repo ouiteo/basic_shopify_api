@@ -23,7 +23,7 @@ setup(
     author="osiset",
     author_email="tyler@osiset.com",
     url="https://github.com/osiset/basic_shopify_api",
-    packages=find_packages(exclude=['tests']),
+    packages=find_packages(exclude=['tests'], include=['basic_shopify_api', 'basic_shopify_api.*']),
     license="MIT License",
     install_requires=[
         "httpx>=0.13"
